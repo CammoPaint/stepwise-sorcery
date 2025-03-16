@@ -1,6 +1,6 @@
-
 import React, { useState } from 'react';
 import { useDocument } from '@/contexts/DocumentContext';
+import { MediaItem } from '@/contexts/MediaLibraryContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -9,12 +9,14 @@ import { Sparkles, UserPlus, MessageSquare, Image, Table, BarChart } from 'lucid
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import UploadPlaceholder from '@/components/UploadPlaceholder';
+import MediaSelector from './MediaSelector';
 
 const DocumentEditor = () => {
   const { state, updateDocument } = useDocument();
   const { selectedDocument } = state;
   const [content, setContent] = useState(selectedDocument?.content || '');
+  const [logo, setLogo] = useState<MediaItem | null>(null);
+  const [bannerImage, setBannerImage] = useState<MediaItem | null>(null);
 
   if (!selectedDocument) {
     return null;
@@ -31,6 +33,16 @@ const DocumentEditor = () => {
       content: content + "\n\nAI Suggestion: Consider adding a section about your target market and competitive analysis."
     });
     setContent(selectedDocument.content);
+  };
+
+  const handleLogoSelect = (mediaItem: MediaItem) => {
+    setLogo(mediaItem);
+    // In a real app, you'd store this media reference in the document data
+  };
+
+  const handleBannerSelect = (mediaItem: MediaItem) => {
+    setBannerImage(mediaItem);
+    // In a real app, you'd store this media reference in the document data
   };
 
   return (
@@ -91,8 +103,20 @@ const DocumentEditor = () => {
           <CardContent className="p-4">
             <h3 className="text-lg font-medium mb-3">Branding & Media</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <UploadPlaceholder label="Upload Logo" />
-              <UploadPlaceholder label="Upload Media" />
+              <MediaSelector 
+                label="Upload Logo" 
+                selectedMediaItem={logo}
+                onSelect={handleLogoSelect}
+                documentId={selectedDocument.id}
+                type="logo"
+              />
+              <MediaSelector 
+                label="Upload Media" 
+                selectedMediaItem={bannerImage}
+                onSelect={handleBannerSelect}
+                documentId={selectedDocument.id}
+                type="image"
+              />
             </div>
           </CardContent>
         </Card>
