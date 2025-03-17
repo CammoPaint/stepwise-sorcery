@@ -16,6 +16,14 @@ export type DocumentCategory = {
   icon: string;
 };
 
+export type DocumentAccess = 'view' | 'edit';
+
+export type DocumentCollaborator = {
+  email: string;
+  access: DocumentAccess;
+  invitePending?: boolean;
+};
+
 export type Document = {
   id: string;
   title: string;
@@ -25,7 +33,7 @@ export type Document = {
   category: string;
   content: string;
   status: 'draft' | 'completed';
-  collaborators: string[];
+  collaborators: DocumentCollaborator[];
   version: number;
 };
 
@@ -46,6 +54,8 @@ type DocumentContextType = {
   saveDocument: () => void;
   exportDocument: (format: 'pdf' | 'docx' | 'gdoc') => void;
   deleteDocument: (id: string) => void;
+  shareDocument: (documentId: string, email: string, access: DocumentAccess) => void;
+  removeCollaborator: (documentId: string, email: string) => void;
 };
 
 // Sample data
@@ -203,6 +213,87 @@ export const DocumentProvider: React.FC<{ children: ReactNode }> = ({ children }
     }));
   };
 
+  const shareDocument = (documentId: string, email: string, access: DocumentAccess) => {
+    setState((prev) => {
+      // Find the document to update
+      const documentToUpdate = prev.documents.find(doc => doc.id === documentId);
+      if (!documentToUpdate) return prev;
+
+      // Check if the collaborator already exists
+      const existingCollaboratorIndex = documentToUpdate.collaborators.findIndex(
+        collab => collab.email === email
+      );
+
+      // Clone the collaborators array to avoid mutating state directly
+      const updatedCollaborators = [...documentToUpdate.collaborators];
+
+      if (existingCollaboratorIndex >= 0) {
+        // Update existing collaborator
+        updatedCollaborators[existingCollaboratorIndex] = {
+          ...updatedCollaborators[existingCollaboratorIndex],
+          access,
+          invitePending: false,
+        };
+      } else {
+        // Add new collaborator
+        updatedCollaborators.push({
+          email,
+          access,
+          invitePending: true,
+        });
+      }
+
+      // Create an updated document
+      const updatedDocument = {
+        ...documentToUpdate,
+        collaborators: updatedCollaborators,
+        updatedAt: new Date(),
+      };
+
+      // Update the documents array and selectedDocument if needed
+      return {
+        ...prev,
+        documents: prev.documents.map(doc => 
+          doc.id === documentId ? updatedDocument : doc
+        ),
+        selectedDocument: prev.selectedDocument?.id === documentId 
+          ? updatedDocument 
+          : prev.selectedDocument,
+      };
+    });
+  };
+
+  const removeCollaborator = (documentId: string, email: string) => {
+    setState((prev) => {
+      // Find the document to update
+      const documentToUpdate = prev.documents.find(doc => doc.id === documentId);
+      if (!documentToUpdate) return prev;
+
+      // Filter out the collaborator to remove
+      const updatedCollaborators = documentToUpdate.collaborators.filter(
+        collab => collab.email !== email
+      );
+
+      // Create an updated document
+      const updatedDocument = {
+        ...documentToUpdate,
+        collaborators: updatedCollaborators,
+        updatedAt: new Date(),
+      };
+
+      // Update the documents array and selectedDocument if needed
+      return {
+        ...prev,
+        documents: prev.documents.map(doc => 
+          doc.id === documentId ? updatedDocument : doc
+        ),
+        selectedDocument: prev.selectedDocument?.id === documentId 
+          ? updatedDocument 
+          : prev.selectedDocument,
+      };
+    });
+  };
+
   return (
     <DocumentContext.Provider
       value={{
@@ -214,6 +305,8 @@ export const DocumentProvider: React.FC<{ children: ReactNode }> = ({ children }
         saveDocument,
         exportDocument,
         deleteDocument,
+        shareDocument,
+        removeCollaborator,
       }}
     >
       {children}

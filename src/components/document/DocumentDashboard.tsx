@@ -5,6 +5,7 @@ import { useDocument } from '@/contexts/DocumentContext';
 import DocumentList from './DocumentList';
 import TemplateGallery from './TemplateGallery';
 import DocumentEditor from './DocumentEditor';
+import ShareDialog from './ShareDialog';
 import { Button } from '@/components/ui/button';
 import { Plus, ArrowLeft, Save, Download, Share2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -22,6 +23,7 @@ const DocumentDashboard = () => {
   const { state, saveDocument, exportDocument } = useDocument();
   const { selectedDocument } = state;
   const [isNewDocumentDialogOpen, setIsNewDocumentDialogOpen] = useState(false);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -68,13 +70,20 @@ const DocumentDashboard = () => {
                 <Download className="h-4 w-4" />
                 Export
               </Button>
-              <Button variant="outline" className="gap-2">
+              <Button 
+                variant="outline" 
+                className="gap-2"
+                onClick={() => setIsShareDialogOpen(true)}
+              >
                 <Share2 className="h-4 w-4" />
                 Share
               </Button>
             </div>
           </div>
           <DocumentEditor />
+          
+          {/* Share Dialog */}
+          <ShareDialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen} />
         </div>
       ) : (
         <Tabs defaultValue="documents" className="w-full">
